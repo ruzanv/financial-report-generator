@@ -14,12 +14,13 @@ export default function ProfileModal({ isOpen, onClose }) {
       <div className="bg-zinc-900 text-white p-6 rounded-2xl w-80 shadow-lg relative">
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 text-zinc-400 hover:text-white text-xl"
+          className="absolute right-3 text-zinc-400 hover:text-white"
         >
           ×
         </button>
-        <h2 className="text-xl font-semibold mb-2">Личный кабинет</h2>
-        <p className="text-sm text-zinc-300"> In progress.</p>
+        <h2 className="text-xl font-semibold mb-2">PROFILE</h2>
+        <p className="text-sm text-zinc-300">
+          Development by @ruzanv.</p>
       </div>
     </div>
   );

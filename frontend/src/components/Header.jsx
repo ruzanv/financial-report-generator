@@ -10,7 +10,7 @@ export default function Header() {
       <button
         onClick={() => setOpen(true)}
         className="rounded-full p-2 hover:bg-zinc-800 transition"
-        aria-label="Открыть профиль"
+        aria-label="Profile"
       >
         <svg
           className="w-6 h-6 text-white"

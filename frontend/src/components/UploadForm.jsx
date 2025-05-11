@@ -15,7 +15,7 @@ export default function UploadForm() {
     } else if (data.state === "FAILURE") {
       setStatus("error");
     } else {
-      setTimeout(() => pollStatus(id), 10000);
+      setTimeout(() => pollStatus(id), 2000);
     }
   };
 
@@ -41,10 +41,10 @@ export default function UploadForm() {
           type="file"
           accept=".csv"
           onChange={(e) => setFile(e.target.files[0])}
-          className="file-input file-input-bordered w-full"
+          className="file-input file-input-bordered w-full items-center text-center"
         />
         <button type="submit" className="btn btn-primary w-full" disabled={!file}>
-          Upload &amp; Generate Report
+           Создать отчет
         </button>
       </form>
 

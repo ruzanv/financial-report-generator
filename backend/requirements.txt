@@ -28,3 +28,4 @@ numpy
 xgboost
 tensorflow
 joblib
+matplotlib
