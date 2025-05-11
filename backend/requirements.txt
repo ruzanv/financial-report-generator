@@ -1,0 +1,30 @@
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic==1.10.15
+python-json-logger==2.0.7
+celery[redis]
+redis
+python-docx
+pandas
+numpy
+scikit-learn
+xgboost
+tensorflow==2.15        ; platform_system != "Darwin" or platform_machine == "x86_64"
+tensorflow-macos==2.15  ; platform_system == "Darwin" and platform_machine == "arm64"
+tensorflow-metal==1.1.0 ; platform_system == "Darwin" and platform_machine == "arm64"
+python-json-logger
+joblib
+requests
+polars
+pyarrow
+datasets>=2.18.0
+fastapi
+uvicorn
+celery
+redis
+pandas
+numpy
+xgboost
+tensorflow
+joblib
