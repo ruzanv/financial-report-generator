@@ -1,4 +1,3 @@
-"""Convenience helpers to load / build ML models."""
 from pathlib import Path
 from joblib import load as _jload
 from tensorflow.keras.models import load_model as _kload

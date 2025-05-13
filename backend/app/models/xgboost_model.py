@@ -1,8 +1,6 @@
 from xgboost import XGBRegressor
 
-
 def build_xgb(**kwargs) -> XGBRegressor:
-    """Factory with sane defaults; kwargs override."""
     defaults = dict(
         n_estimators=500,
         learning_rate=0.05,

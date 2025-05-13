@@ -1,11 +1,3 @@
-"""Incremental training of XGBoost on RFSD 2015‑2020 slice.
-* Полная тренировка первый раз, далее ⬆️ доучивание + добавочные деревья.
-* 5‑fold CV (RMSE, MAE) только при первом запуске; при доучивании – пропускаем.
-* Модель хранится в `backend/app/models/xgb_model.joblib`; скрипт
-  автоматически загружает её и добавляет ещё `ADDITIONAL_TREES`.
-* Метрики финальной модели + CV (если было) логируются в `logs/xgb_runs.csv`.
-* Максимум памяти < 1 GB благодаря Polars scan.
-"""
 from pathlib import Path
 import logging, time, json
 from pythonjsonlogger import jsonlogger
@@ -17,7 +9,7 @@ from xgboost import XGBRegressor, DMatrix, cv
 import joblib
 
 # constants
-ADDITIONAL_TREES = 500
+ADDITIONAL_TREES = 3000
 PARAMS = dict(
     objective="reg:squarederror",
     learning_rate=0.02,
@@ -60,7 +52,7 @@ incremental = MODEL_PATH.exists()
 cv_metrics = {}
 
 if not incremental:
-    # ── first time: run 5‑fold CV ------------------------------------
+    # first run
     logger.info("Running 5‑fold CV …")
     dtrain = DMatrix(X, label=y)
     cv_res = cv(PARAMS, dtrain, num_boost_round=ADDITIONAL_TREES, nfold=5,
@@ -73,7 +65,7 @@ if not incremental:
     }
     logger.info("CV finished", extra=cv_metrics)
 
-# ── build / load model ----------------------------------------------
+# build/load model
 if incremental:
     logger.info("Loading existing model and adding trees", extra={"add": ADDITIONAL_TREES})
     base_model = joblib.load(MODEL_PATH)
@@ -93,7 +85,7 @@ else:
     model = XGBRegressor(n_estimators=ADDITIONAL_TREES, **PARAMS, n_jobs=1)
     model.fit(X, y, verbose=True)
 
-# ── evaluate on full dataset ----------------------------------------
+# evaluate on full dataset
 preds = model.predict(X)
 try:
     rmse_full = mean_squared_error(y, preds, squared=False)
@@ -109,11 +101,11 @@ metrics = {
 }
 logger.info("Final metrics", extra=metrics)
 
-# ── append log -------------------------------------------------------
+# append log]
 row = {"timestamp": time.strftime("%Y-%m-%d %H:%M:%S"), **metrics, "params": json.dumps(model.get_params())}
 log_path = LOGS_DIR / "xgb_runs.csv"
 pd.DataFrame([row]).to_csv(log_path, mode="a", index=False, header=not log_path.exists())
 
-# ── save model -------------------------------------------------------
+# save model
 joblib.dump(model, MODEL_PATH)
 logger.info("Model saved", extra={"path": str(MODEL_PATH)})

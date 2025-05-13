@@ -1,4 +1,4 @@
-"""Resume training the saved LSTM with a lower LR – optional fine‑tune."""
+# resume training the saved LSTM with a lower LR
 from pathlib import Path
 import numpy as np
 import pandas as pd

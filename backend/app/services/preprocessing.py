@@ -1,6 +1,7 @@
 import pandas as pd
 from typing import List
 
+# проверяем ожидаемый колонки
 EXPECTED_COLS: List[str] = [
     "line_1600", "line_2110", "line_2120", "line_2400"
 ]

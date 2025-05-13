@@ -19,7 +19,7 @@ WINDOW = 4
 tf.config.threading.set_intra_op_parallelism_threads(1)
 tf.config.threading.set_inter_op_parallelism_threads(1)
 
-# настроим JSON-логгер
+# JSON-логгер
 logger = logging.getLogger("prediction")
 if not logger.handlers:
     from pythonjsonlogger import jsonlogger
@@ -30,7 +30,6 @@ logger.setLevel(logging.INFO)
 
 MODEL_DIR = Path(settings.model_dir)
 
-# ── XGBoost загружается **при импорте**, потому что оно безопасно ────────────
 xgb_path = MODEL_DIR / "xgb_model.joblib"
 if not xgb_path.exists():
     logger.error("XGB model not found", extra={"path": str(xgb_path)})
@@ -39,21 +38,20 @@ logger.info("Loading XGB model", extra={"path": str(xgb_path)})
 _xgb = joblib.load(xgb_path)
 _booster = _xgb.get_booster()
 
-# ── для LSTM — отложим загрузку до инициализации воркера ──────────────────
 _lstm = None
 _lstm_warmed = False
 
 @worker_process_init.connect
 def init_worker(**kwargs):
     global _lstm, _lstm_warmed
-    # Загружаем модель внутри каждого воркера после fork
+    # загружаем модель внутри каждого воркера после fork
     lstm_path = MODEL_DIR / "lstm_model.h5"
     if not lstm_path.exists():
         logger.error("LSTM model not found", extra={"path": str(lstm_path)})
         raise FileNotFoundError(f"{lstm_path} missing")
     logger.info("Loading LSTM model in worker", extra={"path": str(lstm_path)})
     _lstm = load_model(str(lstm_path), compile=False)
-    # Прогрев для быстрого первого запуска
+    # прогрев для быстрого первого запуска
     dummy = np.zeros((1, WINDOW, 1), dtype=np.float32)
     _lstm.predict(dummy, batch_size=1, verbose=0)
     _lstm_warmed = True
@@ -68,27 +66,33 @@ def predict_financials(df):
 
     logger.info("Starting predictions", extra={"shape": df.shape})
 
-    # ── XGB ────────────────────────────────────────────────
     X_xgb = df[req[:3]].astype("float32")
     logger.info("XGB.predict", extra={"n_rows": len(X_xgb)})
     dm = DMatrix(X_xgb)
     xgb_preds = _booster.predict(dm)
     logger.info("XGB done", extra={"n_preds": len(xgb_preds)})
 
-    # ── LSTM ───────────────────────────────────────────────
     global _lstm, _lstm_warmed
     if _lstm is None:
         raise RuntimeError("LSTM model not initialized in worker")
     series = df["line_2400"].astype("float32").values
+    # нормализация временного ряда для LSTM
+    min_val = float(series.min())
+    max_val = float(series.max())
+    if max_val - min_val != 0:
+        series_scaled = (series - min_val) / (max_val - min_val)
+    else:
+        series_scaled = np.zeros_like(series)
     if len(series) < WINDOW:
         raise ValueError(f"Need at least {WINDOW} points for LSTM, got {len(series)}")
     seqs = [
-        series[i : i + WINDOW].reshape(WINDOW, 1)
-        for i in range(len(series) - WINDOW + 1)
+        series_scaled[i: i + WINDOW].reshape(WINDOW, 1)
+        for i in range(len(series_scaled) - WINDOW + 1)
     ]
     X_lstm = np.stack(seqs, axis=0)
     logger.info("LSTM.predict", extra={"shape": X_lstm.shape})
-    lstm_out = _lstm.predict(X_lstm, batch_size=32, verbose=0).squeeze()
+    lstm_out_scaled = _lstm.predict(X_lstm, batch_size=32, verbose=0).squeeze()
+    lstm_out = lstm_out_scaled * (max_val - min_val) + min_val
     logger.info("LSTM done", extra={"n_preds": int(np.atleast_1d(lstm_out).shape[0])})
 
     return {

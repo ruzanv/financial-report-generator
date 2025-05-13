@@ -19,13 +19,9 @@ requests
 polars
 pyarrow
 datasets>=2.18.0
-fastapi
 uvicorn
 celery
-redis
-pandas
 numpy
-xgboost
-tensorflow
 joblib
 matplotlib
+seaborn

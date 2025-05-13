@@ -1,7 +1,7 @@
 OPTIONAL
 docker compose down --volumes --remove-orphans   # остановить стек и удалить его контейнеры
 docker builder prune --all                       # очистить кэш слои сборки
-docker image prune -a                              # удалить все неиспользуемые образы
+docker image prune -a                            # удалить все неиспользуемые образы
 
 docker system prune -a --volumes                 # жёсткая чистка 
 
